@@ -1,0 +1,74 @@
+import requests
+from lxml import etree
+
+
+# 给定一个网站头信息，模拟用户headers信息
+headers = {
+    'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36',
+}
+
+# 定义爬取URL
+url = 'https://www.qiushibaike.com/'
+# 写入TEXT文件定义空字符串
+data_All = ''
+
+
+for p in range(3):
+    # 调用requests的get方法解析URL
+    req = requests.get(url,headers=headers)
+    html = req.text
+
+    # 用etree将HTML变成可以遍历的树状结构
+    tree = etree.HTML(html)
+    content_res = tree.xpath('//ul//li//div[@class="recmd-right"]')
+
+    # 遍历content_res这段HTML的树状结构
+    for res in content_res:
+        # 查看当前节点中的内容
+        # print(etree.tostring(res))
+
+        # text()获取当前节点中的内容，但显示出的还是一个列表
+        contents = res.xpath('a[@class="recmd-content"]/text()')
+        info_res = res.xpath('div[@class="recmd-detail clearfix"]/div//span/text()')
+        name_res = res.xpath('div[@class="recmd-detail clearfix"]/a[@class="recmd-user"]/span/text()')
+        # print(contents)
+        # print(info_res)
+        # print(name_res)
+
+        # 调整输出再遍历列表
+        for r in contents:
+            print("段子内容：",r)
+
+            # 写入文档
+            data_All += "段子内容："+ r +"\n"
+        for i in info_res:
+            print(i,end="")
+
+            # 写入文档
+            data_All += i
+        for n in name_res:
+            print("\n段子作者：" + n)
+
+            # 写入文档
+            data_All += "\n段子作者：" + n + "\n"
+        print("\n=====================")
+
+        data_All += "\n=====================\n"
+
+        # 获取网址的第二页
+        current_page = tree.xpath('//span[@class="current"]/text()')
+        next_page = int(current_page[0]) + 1
+
+        # 更新网址
+        url = 'https://www.qiushibaike.com/8hr/page/%d/' % next_page
+    print("第%d页" % next_page,url)
+
+    # 写入文档
+    data_All += "第%d页" % next_page + url + "\n"
+
+
+with open('spider1.txt','w',encoding='utf-8') as f:
+    f.write(data_All)
+
+
+
